@@ -40,6 +40,10 @@ In a Linux or Mac environment, add `Varlife.rule` to `~/.golly/Rules`.
 5. To convert the Varlife pattern to a Conway's Game of Life pattern, first press Ctrl + A (or Command + A on a Mac) in the editing screen on Golly to select the entire Varlife pattern, and execute `MetafierV3.py`. This will generate a file named `Output.mc` in this directory (or the same directory as `MetafierV3.py`, if the file is moved somewhere else) containing the output pattern.
 
 
+## Examples
+The [lisp-in-life](https://github.com/woodrush/lisp-in-life) project is an example of the QFT Devkit in use.
+
+
 ## References
 - The original QFT repository: https://github.com/QuestForTetris/QFT
 - Stack Exchange post for QFT: https://codegolf.stackexchange.com/questions/11880/build-a-working-game-of-tetris-in-conways-game-of-life
