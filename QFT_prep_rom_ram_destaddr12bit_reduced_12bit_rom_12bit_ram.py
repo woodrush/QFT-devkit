@@ -111,7 +111,7 @@ for i_addr, (_, binstring) in enumerate(l_binstring):
 g.show("Done.")
 
 
-N_BITS_ROM = 13
+N_BITS_ROM = 12
 N_BITS_RAM = 12
 
 ram_length_in = g.getstring("""ROM size: {}
