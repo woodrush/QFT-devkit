@@ -22,22 +22,29 @@ import golly as g
 # QFTASM_RAMSTDIN_BUF_STARTPOSITION = 61 + RAM_NEGATIVE_BUFFER_SIZE
 # QFTASM_RAMSTDOUT_BUF_STARTPOSITION = 63 + RAM_NEGATIVE_BUFFER_SIZE
 
-# calc.c
-RAM_NEGATIVE_BUFFER_SIZE = 20
-QFTASM_RAMSTDIN_BUF_STARTPOSITION = 710 + RAM_NEGATIVE_BUFFER_SIZE
-QFTASM_RAMSTDOUT_BUF_STARTPOSITION = 1222 + RAM_NEGATIVE_BUFFER_SIZE
+# # calc.c
+# RAM_NEGATIVE_BUFFER_SIZE = 200
+# QFTASM_RAMSTDIN_BUF_STARTPOSITION = 688 + RAM_NEGATIVE_BUFFER_SIZE
+# QFTASM_RAMSTDOUT_BUF_STARTPOSITION = 1200 + RAM_NEGATIVE_BUFFER_SIZE
 
 # # lisp.c
 # RAM_NEGATIVE_BUFFER_SIZE = 500
 # QFTASM_RAMSTDIN_BUF_STARTPOSITION = (4095-1024-512) + RAM_NEGATIVE_BUFFER_SIZE
 # QFTASM_RAMSTDOUT_BUF_STARTPOSITION = (4095-1024-(512-128)) + RAM_NEGATIVE_BUFFER_SIZE
 
+# calc.c
+RAM_NEGATIVE_BUFFER_SIZE = 200
+QFTASM_RAMSTDIN_BUF_STARTPOSITION = 688 + RAM_NEGATIVE_BUFFER_SIZE
+QFTASM_RAMSTDOUT_BUF_STARTPOSITION = 1200 + RAM_NEGATIVE_BUFFER_SIZE
+
 
 
 # p_init = (425, 239)
 # p_init = (346+16*2, 239)
-p_init = (353, 239)
 # p_init = (409, 239)
+# p_init = (353, 239)
+# p_init = (329, 239)
+p_init = (337, 239)
 
 delta_x = 16
 delta_y = 16
@@ -158,52 +165,89 @@ write_ram_string = ""
 # write_ram_string = g.getstring("Enter string to write to stdin (blank for not writing):")
 
 
-# write_ram_string = """(define defun
-#   (macro (fname varlist body)
-#     (cons (quote define)
-#     (cons fname
-#     (cons (cons (quote lambda)
-#           (cons varlist
-#           (cons body ()))) ())))))
+write_ram_string = """(define defun
+  (macro (fname varlist body)
+    (list
+      (quote define) fname
+      (list (quote lambda*) varlist body))))
 
-# (defun append (l item)
-#   (if l
-#     (cons (car l) (append (cdr l) item))
-#     (cons item ())))
+(defun append (l item)
+  (if l
+    (cons (car l) (append (cdr l) item))
+    (cons item ())))
 
-# (defun isprime (n)
-#   ((lambda (primelist p ret)
-#      (progn
-#        (while primelist
-#          (progn
-#            (define p (car primelist))
-#            (define primelist (cdr primelist))
-#            (if (eq 0 (mod n p))
-#              (progn
-#                (define primelist ())
-#                (define ret ()))
-#              ())))
-#        ret))
-#    primelist () 1))
+(defun isprime (n)
+  ((lambda* (primelist p ret)
+     (progn
+       (while primelist
+         (progn
+           (define p (car primelist))
+           (define primelist (cdr primelist))
+           (if (eq 0 (mod n p))
+             (progn
+               (define primelist ())
+               (define ret ()))
+             ())))
+       ret))
+   primelist () 1))
 
-# (define n 2)
-# (define nmax 20)
-# (define primelist (cons 2 ()))
+(define n 2)
+(define nmax 20)
+(define primelist (cons 2 ()))
 
-# (while (< n nmax)
-#   (progn
-#     (define n (+ 1 n))
-#     (if (isprime n)
-#       (define primelist (append primelist n))
-#       ())))
+(while (< n nmax)
+  (progn
+    (define n (+ 1 n))
+    (if (isprime n)
+      (define primelist (append primelist n))
+      ())))
 
-# (print primelist)"""
+(print primelist)"""
+
+write_ram_string = """(print
+  (((lambda (f)
+      ((lambda (x) (f (lambda (v) ((x x) v))))
+       (lambda (x) (f (lambda (v) ((x x) v))))))
+    (lambda (fact)
+      (lambda (n)
+        (if (eq n 0) 1 (* n (fact (- n 1)))))))
+   5))"""
+
+write_ram_string = """(define counter
+  (lambda (n)
+    (lambda (methodname)
+      (if (eq methodname (quote inc))
+        (lambda () (define n (+ n 1)))
+      (if (eq methodname (quote dec))
+        (lambda () (define n (- n 1)))
+      (if (eq methodname (quote get))
+        (lambda () n)
+      (if (eq methodname (quote set))
+        (lambda (m) (define n m))
+        ())))))))
+
+(define . (macro (object methodname) (list object (list (quote quote) methodname))))
+(define new (lambda (x) (x)))
+
+(define counter1 (new counter))
+(define counter2 (new counter))
+
+((. counter1 set) 0)
+((. counter2 set) 8)
+
+(print ((. counter1 inc)) ())
+(print ((. counter1 inc)) ())
+(print ((. counter1 inc)) ())
+(print ((. counter2 inc)) ())
+(print ((. counter2 dec)) ())
+(print ((. counter1 inc)) ())
+(print ((. counter2 inc)) ())"""
 
 # write_ram_string = "(print (* 3 14))"
 
 # write_ram_string = "3*2+1"
 
-write_ram_string = ""
+# write_ram_string = ""
 
 if len(write_ram_string) > 0:
     write_ram(write_ram_string)

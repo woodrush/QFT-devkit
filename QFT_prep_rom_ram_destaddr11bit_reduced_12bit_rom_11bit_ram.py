@@ -67,10 +67,10 @@ for line in parsed:
     lineno, opcode, (d_1, n_1), (d_2, n_2), (d_3, n_3) = line
     d_1, d_2, d_3 = map(lambda n: int2binstr((n + (1 << 16)) % (1 << 16), length=2),  [d_1, d_2, d_3])
     n_1, n_2 = map(lambda n: int2binstr((n + (1 << 16)) % (1 << 16), length=16), [n_1, n_2])
-    n_3 = int2binstr((n_3 + (1 << 16)) % (1 << 16), length=12)
+    n_3 = int2binstr((n_3 + (1 << 16)) % (1 << 16), length=11)
     bins = [opcode, n_1, d_1, n_2, d_2, n_3, d_3]
     linestr = "".join([rev(s) for s in bins])
-    rom_width = 3+18+18+12+2
+    rom_width = 3+18+18+11+2
     linestr = ("{:" + str(rom_width) + "b}").format(int(linestr, 2))
     if "1" not in linestr:
         linestr = " "*rom_width
@@ -112,7 +112,7 @@ g.show("Done.")
 
 
 N_BITS_ROM = 12
-N_BITS_RAM = 12
+N_BITS_RAM = 11
 
 ram_length_in = g.getstring("""ROM size: {}
 Input maximum RAM address (RAM size - 1) (3 <= n <= (1 << {})):""".format(len(parsed), N_BITS_RAM))
@@ -125,7 +125,7 @@ RAM_POSITIVE_BUFFER_SIZE = int(ram_length_in) + 1
 RAM_LENGTH = RAM_NEGATIVE_BUFFER_SIZE + RAM_POSITIVE_BUFFER_SIZE
 
 d_patterns_rom_params = {
-    "init": (183-8*4, 40)
+    "init": (183-8*5, 40)
 }
 
 # d_patterns_ram_xoffset = 96+8*2
