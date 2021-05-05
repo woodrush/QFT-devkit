@@ -32,10 +32,17 @@ import golly as g
 # QFTASM_RAMSTDIN_BUF_STARTPOSITION = (4095-1024-512) + RAM_NEGATIVE_BUFFER_SIZE
 # QFTASM_RAMSTDOUT_BUF_STARTPOSITION = (4095-1024-(512-128)) + RAM_NEGATIVE_BUFFER_SIZE
 
+# # calc.c
+# RAM_NEGATIVE_BUFFER_SIZE = 200
+# QFTASM_RAMSTDIN_BUF_STARTPOSITION = 688 + RAM_NEGATIVE_BUFFER_SIZE
+# QFTASM_RAMSTDOUT_BUF_STARTPOSITION = 1200 + RAM_NEGATIVE_BUFFER_SIZE
+
+
 # calc.c
 RAM_NEGATIVE_BUFFER_SIZE = 200
-QFTASM_RAMSTDIN_BUF_STARTPOSITION = 688 + RAM_NEGATIVE_BUFFER_SIZE
-QFTASM_RAMSTDOUT_BUF_STARTPOSITION = 1200 + RAM_NEGATIVE_BUFFER_SIZE
+QFTASM_RAMSTDIN_BUF_STARTPOSITION = 700 + RAM_NEGATIVE_BUFFER_SIZE
+QFTASM_RAMSTDOUT_BUF_STARTPOSITION = 1100 + RAM_NEGATIVE_BUFFER_SIZE
+
 
 
 
@@ -113,18 +120,28 @@ def decode_stdin_buffer(stdin_buf):
 
     return "".join([chr(i) for i in ret])
 
+d_bit2state = {
+    0: 6,
+    1: 7,
+}
+
+def write_byte_at(write_byte, addr):
+    if addr < 11:
+        addr = addr
+    if addr > 32768:
+        addr = 32768 - addr + 11
+    if addr >= 11:
+        addr = addr + RAM_NEGATIVE_BUFFER_SIZE
+    b_binary = "{:016b}".format(write_byte)
+    for i_bit, bit in enumerate(b_binary):
+        for x_offset in range(2):
+            g.setcell(p_init[0] + i_bit * delta_x + x_offset, p_init[1] + addr * delta_y, d_bit2state[int(bit)])
+
 def write_ram(stdin_string):
-    d_bit2state = {
-        0: 6,
-        1: 7,
-    }
     stdin_bytes = encode_stdin_string(stdin_string)
     # g.note("Raw stdin bytes:" + str(stdin_bytes))
     for i_byte, b in enumerate(stdin_bytes):
-        b_binary = "{:016b}".format(b)
-        for i_bit, bit in enumerate(b_binary):
-            for x_offset in range(2):
-                g.setcell(p_init[0] + i_bit * delta_x + x_offset, p_init[1] + (QFTASM_RAMSTDIN_BUF_STARTPOSITION + i_byte) * delta_y, d_bit2state[int(bit)])
+        write_byte_at(b, i_byte + QFTASM_RAMSTDIN_BUF_STARTPOSITION - RAM_NEGATIVE_BUFFER_SIZE)
 
 def show_stdio():
     d_state2bit = {
@@ -153,6 +170,216 @@ def show_stdio():
     stdout_str = "".join(stdout_bytes_2)
 
     g.note("Stdin:\n" + stdin_str + "\n\nStdout:\n" + stdout_str)
+
+
+
+
+
+
+
+
+
+
+
+write_bytes = [
+    (1400,1),
+    (1100,2),
+    (108,11),
+    (97,12),
+    (109,13),
+    (98,14),
+    (100,15),
+    (97,16),
+    (112,18),
+    (114,19),
+    (105,20),
+    (110,21),
+    (116,22),
+    (100,24),
+    (101,25),
+    (102,26),
+    (105,27),
+    (110,28),
+    (101,29),
+    (113,31),
+    (117,32),
+    (111,33),
+    (116,34),
+    (101,35),
+    (108,37),
+    (105,38),
+    (115,39),
+    (116,40),
+    (105,42),
+    (102,43),
+    (99,45),
+    (97,46),
+    (114,47),
+    (119,49),
+    (104,50),
+    (105,51),
+    (108,52),
+    (101,53),
+    (112,55),
+    (114,56),
+    (111,57),
+    (103,58),
+    (110,59),
+    (109,61),
+    (97,62),
+    (99,63),
+    (114,64),
+    (111,65),
+    (108,67),
+    (97,68),
+    (109,69),
+    (98,70),
+    (100,71),
+    (97,72),
+    (42,73),
+    (101,75),
+    (113,76),
+    (99,78),
+    (111,79),
+    (110,80),
+    (115,81),
+    (43,83),
+    (116,85),
+    (109,87),
+    (111,88),
+    (100,89),
+    (101,91),
+    (118,92),
+    (97,93),
+    (108,94),
+    (99,96),
+    (100,97),
+    (114,98),
+    (45,100),
+    (42,102),
+    (60,104),
+    (62,106),
+    (47,108),
+    (97,110),
+    (116,111),
+    (111,112),
+    (109,113),
+    (1742,115),
+    (1620,119),
+    (1312,122),
+    (2301,125),
+    (286,127),
+    (1476,128),
+    (1387,131),
+    (1426,132),
+    (1698,134),
+    (1660,137),
+    (1742,140),
+    (1742,143),
+    (1830,147),
+    (290,148),
+    (1577,149),
+    (290,150),
+    (1893,151),
+    (290,152),
+    (1893,153),
+    (2373,155),
+    (1452,158),
+    (1893,160),
+    (1893,161),
+    (2153,162),
+    (2153,163),
+    (1893,164),
+    (2311,165),
+    (108,198),
+    (42,201),
+    (198,202),
+    (106,204),
+    (31,207),
+    (204,208),
+    (100,210),
+    (18,213),
+    (210,214),
+    (104,216),
+    (37,219),
+    (216,220),
+    (67,222),
+    (83,225),
+    (24,228),
+    (225,229),
+    (222,230),
+    (102,231),
+    (49,234),
+    (96,237),
+    (234,239),
+    (91,240),
+    (55,243),
+    (45,246),
+    (75,249),
+    (246,250),
+    (243,251),
+    (85,252),
+    (78,255),
+    (61,258),
+    (110,261),
+    (11,264),
+    (261,265),
+    (87,267),
+    (267,270),
+    (264,271),
+    (258,272),
+    (255,273),
+    (252,274),
+    (249,276),
+    (240,278),
+    (237,279),
+    (231,280),
+    (228,281),
+    (219,282),
+    (213,283),
+    (207,284),
+    (201,285),
+    (1,287),
+    (76,294),
+    (97,295),
+    (109,296),
+    (98,297),
+    (100,298),
+    (97,299),
+    (62,300),
+    (77,302),
+    (97,303),
+    (99,304),
+    (114,305),
+    (111,306),
+    (62,307),
+    (67,309),
+    (108,310),
+    (111,311),
+    (115,312),
+    (117,313),
+    (114,314),
+    (101,315),
+    (62,316),
+    (319,318),
+]
+
+
+# g.show("Writing bytes...")
+# for content, addr in write_bytes:
+#     write_byte_at(content, addr)
+# g.show("Done.")
+
+
+
+
+
+
+
+
+
+
+
 
 
 show_raw_ram_region()
@@ -204,44 +431,44 @@ write_ram_string = """(define defun
 
 (print primelist)"""
 
-write_ram_string = """(print
-  (((lambda (f)
-      ((lambda (x) (f (lambda (v) ((x x) v))))
-       (lambda (x) (f (lambda (v) ((x x) v))))))
-    (lambda (fact)
-      (lambda (n)
-        (if (eq n 0) 1 (* n (fact (- n 1)))))))
-   5))"""
+# write_ram_string = """(print
+#   (((lambda (f)
+#       ((lambda (x) (f (lambda (v) ((x x) v))))
+#        (lambda (x) (f (lambda (v) ((x x) v))))))
+#     (lambda (fact)
+#       (lambda (n)
+#         (if (eq n 0) 1 (* n (fact (- n 1)))))))
+#    5))"""
 
-write_ram_string = """(define counter
-  (lambda (n)
-    (lambda (methodname)
-      (if (eq methodname (quote inc))
-        (lambda () (define n (+ n 1)))
-      (if (eq methodname (quote dec))
-        (lambda () (define n (- n 1)))
-      (if (eq methodname (quote get))
-        (lambda () n)
-      (if (eq methodname (quote set))
-        (lambda (m) (define n m))
-        ())))))))
+# write_ram_string = """(define counter
+#   (lambda (n)
+#     (lambda (methodname)
+#       (if (eq methodname (quote inc))
+#         (lambda () (define n (+ n 1)))
+#       (if (eq methodname (quote dec))
+#         (lambda () (define n (- n 1)))
+#       (if (eq methodname (quote get))
+#         (lambda () n)
+#       (if (eq methodname (quote set))
+#         (lambda (m) (define n m))
+#         ())))))))
 
-(define . (macro (object methodname) (list object (list (quote quote) methodname))))
-(define new (lambda (x) (x)))
+# (define . (macro (object methodname) (list object (list (quote quote) methodname))))
+# (define new (lambda (x) (x)))
 
-(define counter1 (new counter))
-(define counter2 (new counter))
+# (define counter1 (new counter))
+# (define counter2 (new counter))
 
-((. counter1 set) 0)
-((. counter2 set) 8)
+# ((. counter1 set) 0)
+# ((. counter2 set) 8)
 
-(print ((. counter1 inc)) ())
-(print ((. counter1 inc)) ())
-(print ((. counter1 inc)) ())
-(print ((. counter2 inc)) ())
-(print ((. counter2 dec)) ())
-(print ((. counter1 inc)) ())
-(print ((. counter2 inc)) ())"""
+# (print ((. counter1 inc)) ())
+# (print ((. counter1 inc)) ())
+# (print ((. counter1 inc)) ())
+# (print ((. counter2 inc)) ())
+# (print ((. counter2 dec)) ())
+# (print ((. counter1 inc)) ())
+# (print ((. counter2 inc)) ())"""
 
 # write_ram_string = "(print (* 3 14))"
 
@@ -253,3 +480,5 @@ if len(write_ram_string) > 0:
     write_ram(write_ram_string)
 
 show_stdio()
+
+
