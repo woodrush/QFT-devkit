@@ -126,12 +126,14 @@ d_bit2state = {
     1: 7,
 }
 
-def write_byte_at(write_byte, addr):
+def write_byte_at(addr, write_byte):
     if addr < 11:
         addr = addr
-    if addr > 32768:
-        addr = 32768 - addr + 11
-    if addr >= 11:
+    # elif addr > 32768:
+    #     addr = 32768 - addr + 11
+    elif addr >= 1024 - RAM_NEGATIVE_BUFFER_SIZE:
+        addr = 1024 - addr + 10
+    elif addr >= 11:
         addr = addr + RAM_NEGATIVE_BUFFER_SIZE
     b_binary = "{:016b}".format(write_byte)
     for i_bit, bit in enumerate(b_binary):
@@ -142,7 +144,7 @@ def write_ram(stdin_string):
     stdin_bytes = encode_stdin_string(stdin_string)
     # g.note("Raw stdin bytes:" + str(stdin_bytes))
     for i_byte, b in enumerate(stdin_bytes):
-        write_byte_at(b, i_byte + QFTASM_RAMSTDIN_BUF_STARTPOSITION - RAM_NEGATIVE_BUFFER_SIZE)
+        write_byte_at(i_byte + QFTASM_RAMSTDIN_BUF_STARTPOSITION - RAM_NEGATIVE_BUFFER_SIZE, b)
 
 def show_stdio():
     d_state2bit = {
@@ -409,8 +411,8 @@ write_bytes = [
 
 
 # g.show("Writing bytes...")
-# for content, addr in write_bytes:
-#     write_byte_at(content, addr)
+# for t in write_bytes:
+#     write_byte_at(*t)
 # g.show("Done.")
 
 
