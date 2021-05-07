@@ -136,7 +136,7 @@ g.show("Tiling ROM hashtable 2...")
 p_init = d_patterns_rom_body["init2"]
 delta_x, delta_y = d_patterns_rom_body["delta"]
 for i_addr, (_, binstring) in enumerate(l_binstring_pc2hash):
-    for i_bit, bit in enumerate(binstring):
+    for i_bit, bit in enumerate(reversed(binstring)):
         if bit == " ":
             continue
         d_patterns_rom_body[int(bit)].put(p_init[0] + delta_x*i_bit, p_init[1] + i_addr*delta_y, (1,0,0,1,"copy"))

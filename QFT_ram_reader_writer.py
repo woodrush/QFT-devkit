@@ -413,10 +413,10 @@ write_bytes = [
 ]
 
 
-g.show("Writing bytes...")
-for t in write_bytes:
-    write_byte_at(*t)
-g.show("Done.")
+# g.show("Writing bytes...")
+# for t in write_bytes:
+#     write_byte_at(*t)
+# g.show("Done.")
 
 
 
@@ -524,8 +524,8 @@ write_ram_string = "(print (* 3 14))"
 
 # write_ram_string = ""
 
-if len(write_ram_string) > 0:
-    write_ram(write_ram_string)
+# if len(write_ram_string) > 0:
+#     write_ram(write_ram_string)
 
 show_stdio()
 
