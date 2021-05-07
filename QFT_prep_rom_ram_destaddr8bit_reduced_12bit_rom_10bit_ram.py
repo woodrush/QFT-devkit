@@ -5,7 +5,7 @@ from pyparsing import *
 import sys
 
 d_patterns_rom_body = {
-    "init": (-289+8, 40),
+    "init": (-289+8-8*4, 40),
     "delta": (8, -8),
     0: pattern("4b2B$4b2D$4bD$B3bF2bD$3BD2F2D$4bD$4bB$4bB!"),
     1: pattern("4b2B$4b2D$2bBbD$BbBbBb2D$BDBD2BbD$4bDB$3bB$4bB!")
@@ -66,11 +66,14 @@ def rev(s):
 for line in parsed:
     lineno, opcode, (d_1, n_1), (d_2, n_2), (d_3, n_3) = line
     d_1, d_2, d_3 = map(lambda n: int2binstr((n + (1 << 16)) % (1 << 16), length=2),  [d_1, d_2, d_3])
-    n_1, n_2 = map(lambda n: int2binstr((n + (1 << 16)) % (1 << 16), length=16), [n_1, n_2])
+    # n_1, n_2 = map(lambda n: int2binstr((n + (1 << 16)) % (1 << 16), length=16), [n_1, n_2])
+    n_1 = int2binstr((n_1 + (1 << 16)) % (1 << 16), length=8)
+    n_2 = int2binstr((n_2 + (1 << 16)) % (1 << 16), length=16)
     n_3 = int2binstr((n_3 + (1 << 16)) % (1 << 16), length=8)
     bins = [opcode, n_1, d_1, n_2, d_2, n_3, d_3]
     linestr = "".join([rev(s) for s in bins])
-    rom_width = 3+18+18+8+2
+    rom_width = 3+10+18+8+2
+    # rom_width = 3+18+18+8+2
     linestr = ("{:" + str(rom_width) + "b}").format(int(linestr, 2))
     if "1" not in linestr:
         linestr = " "*rom_width
@@ -125,11 +128,11 @@ RAM_POSITIVE_BUFFER_SIZE = int(ram_length_in) + 1
 RAM_LENGTH = RAM_NEGATIVE_BUFFER_SIZE + RAM_POSITIVE_BUFFER_SIZE
 
 d_patterns_rom_params = {
-    "init": (183-8*8, 40)
+    "init": (183-8*8-16-8*6-8*4, 40)
 }
 
 # d_patterns_ram_xoffset = 96+8*2
-d_patterns_ram_xoffset = 96+8*2-8*7
+d_patterns_ram_xoffset = 96+8*2-8*7-8*4+16*3
 
 d_patterns_rom_demultiplexer = {
     # The bit patterns must be reversed (the lsb comes leftmost) for the rom

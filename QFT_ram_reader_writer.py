@@ -41,7 +41,7 @@ import golly as g
 # calc.c
 RAM_NEGATIVE_BUFFER_SIZE = 200
 QFTASM_RAMSTDIN_BUF_STARTPOSITION = 350 + RAM_NEGATIVE_BUFFER_SIZE
-QFTASM_RAMSTDOUT_BUF_STARTPOSITION = 822 + RAM_NEGATIVE_BUFFER_SIZE
+QFTASM_RAMSTDOUT_BUF_STARTPOSITION = 823 + RAM_NEGATIVE_BUFFER_SIZE
 
 
 
@@ -51,8 +51,11 @@ QFTASM_RAMSTDOUT_BUF_STARTPOSITION = 822 + RAM_NEGATIVE_BUFFER_SIZE
 # p_init = (409, 239)
 # p_init = (353, 239)
 # p_init = (329, 239)
-# p_init = (337, 239)
-p_init = (321, 239)
+# p_init = (321, 239)
+# p_init = (329, 239)
+
+# p_init = (289, 239)
+p_init = (337, 239)
 
 delta_x = 16
 delta_y = 16
@@ -273,7 +276,7 @@ write_bytes = [
 
     # Memory initialization
     (1,700),
-    (2,822),
+    (2,823),
     (11,108),
     (12,97),
     (13,109),
@@ -515,14 +518,14 @@ write_ram_string = """(define defun
 # (print ((. counter1 inc)) ())
 # (print ((. counter2 inc)) ())"""
 
-# write_ram_string = "(print (* 3 14))"
+write_ram_string = "(print (* 3 14))"
 
 # write_ram_string = "3*2+1"
 
 # write_ram_string = ""
 
-if len(write_ram_string) > 0:
-    write_ram(write_ram_string)
+# if len(write_ram_string) > 0:
+#     write_ram(write_ram_string)
 
 show_stdio()
 
