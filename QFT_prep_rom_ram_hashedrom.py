@@ -6,7 +6,7 @@ import sys
 
 d_patterns_rom_body = {
     "init": (-289+8-8*4, 40),
-    "init2": (-289+8-8*4 + 58*8, 40),
+    "init2": (-289+8-8*4 + 63*8, 40),
     "delta": (8, -8),
     0: pattern("4b2B$4b2D$4bD$B3bF2bD$3BD2F2D$4bD$4bB$4bB!"),
     1: pattern("4b2B$4b2D$2bBbD$BbBbBb2D$BDBD2BbD$4bDB$3bB$4bB!")
@@ -79,7 +79,12 @@ for line in parsed:
     linestr = "".join([rev(s) for s in bins])
     rom_width = 3+8+2+16+2+8+2
     # rom_width = 3+18+18+8+2
+
     linestr = ("{:0" + str(rom_width) + "b}").format(int(linestr, 2))
+
+    # linestr = ("{:" + str(rom_width) + "b}").format(int(linestr, 2))
+    # if "1" not in linestr:
+    #     linestr = " "*rom_width
 
     if linestr not in d_inst2lineno.keys():
         d_inst2lineno[linestr] = []
@@ -88,32 +93,26 @@ for line in parsed:
     d_lineno2inst[lineno] = linestr
 
 inst_sorted = sorted(d_inst2lineno.items(), key=lambda x: len(x[1]), reverse=True)
+# inst_sorted = sorted(d_inst2lineno.items(), key=lambda x: x[0], reverse=True)
 
 l_binstring = [(a, b) for a, (b, _) in enumerate(inst_sorted)]
 d_inst2insthash = dict([(b, a) for a, (b, _) in enumerate(inst_sorted)])
 linenolist = sorted(d_lineno2inst.keys())
+
 l_binstring_pc2hash = [(lineno, "{:010b}".format(d_inst2insthash[d_lineno2inst[lineno]])) for lineno in linenolist]
 
+# def revstr(x):
+#     h = d_inst2insthash[d_lineno2inst[x]]
+#     h_str = "{:10b}".format(h)
+#     h_revstr = "".join(reversed(h_str))
+#     ret = "{:10b}".format(int(h_revstr, 2))
+#     if "1" not in ret:
+#         ret = " "*10
+#     return ret
 
-# size of the metafied calc.c:
-# None: 392kb
-
-# # Sorting: 392kb
-# l_binstring = sorted(l_binstring, key=lambda x: x[1], reverse=True)
-
-
-# Sorting mnz only: 400kb
-
-# l_binstring_header = []
-# l_binstring_footer = []
-# for item in l_binstring:
-#     lineno, linestr = item
-#     if "1" not in linestr:
-#         l_binstring_footer.append(item)
-#     else:
-#         l_binstring_header.append(item)
-
-# l_binstring = l_binstring_header + l_binstring_footer
+# # l_binstring_pc2hash = [(lineno, "".join(reversed("{:010b}".format(d_inst2insthash[d_lineno2inst[lineno]])))) for lineno in linenolist]
+# l_binstring_pc2hash = [(lineno, revstr(lineno)) for lineno in linenolist]
+# l_binstring_pc2hash = tuple(sorted(l_binstring_pc2hash, key=lambda x: x[1], reverse=True))
 
 
 g.setrule("Varlife")
@@ -136,7 +135,8 @@ g.show("Tiling ROM hashtable 2...")
 p_init = d_patterns_rom_body["init2"]
 delta_x, delta_y = d_patterns_rom_body["delta"]
 for i_addr, (_, binstring) in enumerate(l_binstring_pc2hash):
-    for i_bit, bit in enumerate(reversed(binstring)):
+    # for i_bit, bit in enumerate(reversed(binstring)):
+    for i_bit, bit in enumerate(binstring):
         if bit == " ":
             continue
         d_patterns_rom_body[int(bit)].put(p_init[0] + delta_x*i_bit, p_init[1] + i_addr*delta_y, (1,0,0,1,"copy"))
@@ -420,9 +420,9 @@ tile_module(d_patterns_rom)
 
 tile_rom_demultiplexer_body(l_binstring)
 
-tile_rom_demultiplexer_body(l_binstring_pc2hash, xoffset=27*8, h_repeats=12)
-tile_pattern(d_patterns_rom["d_pattern_right"], xoffset=27*8+2*8, v_repeats=len(parsed)-1)
-tile_pattern(d_patterns_rom["d_pattern_left"],  xoffset=27*8, v_repeats=len(parsed))
+tile_rom_demultiplexer_body(l_binstring_pc2hash, xoffset=32*8, h_repeats=12)
+tile_pattern(d_patterns_rom["d_pattern_right"], xoffset=32*8+2*8, v_repeats=len(parsed)-1)
+tile_pattern(d_patterns_rom["d_pattern_left"],  xoffset=32*8, v_repeats=len(parsed))
 
 # RAM
 g.show("Tiling RAM module...")
