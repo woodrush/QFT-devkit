@@ -35,7 +35,9 @@ class Parser(object):
         SRA = Literal("SRA").setParseAction(lambda t: int2binstr(9, length=4))
         SRL = Literal("SRL").setParseAction(lambda t: int2binstr(10, length=4))
         opcode = MNZ | MLZ | ADD | SUB | AND | OR | XOR | ANT | SL | SRL | SRA
-        lineno = (integer + Literal(".")).suppress()
+        lineno = (integer + Literal(".")).setParseAction(
+            lambda t: [int(t[0])]
+        )
         comment = (Literal(";") + restOfLine).suppress()
         inst = (lineno + opcode + operand + operand + operand + Optional(comment)).setParseAction(
             lambda t: [t]
@@ -61,12 +63,31 @@ def rev(s):
     return "".join(reversed(s))
 
 for line in parsed:
-    opcode, (d_1, n_1), (d_2, n_2), (d_3, n_3) = line
+    lineno, opcode, (d_1, n_1), (d_2, n_2), (d_3, n_3) = line
     d_1, d_2, d_3 = map(lambda n: int2binstr((n + (1 << 16)) % (1 << 16), length=2),  [d_1, d_2, d_3])
     n_1, n_2, n_3 = map(lambda n: int2binstr((n + (1 << 16)) % (1 << 16), length=16), [n_1, n_2, n_3])
     bins = [opcode, n_1, d_1, n_2, d_2, n_3, d_3]
     linestr = "".join([rev(s) for s in bins])
-    l_binstring.append(linestr)
+    l_binstring.append((lineno, linestr))
+
+# size of the metafied calc.c:
+# None: 392kb
+
+# Sorting: 392kb
+# l_binstring = sorted(l_binstring, key=lambda x: x[1], reverse=True)
+
+# Sorting mnz only: 400kb
+
+# l_binstring_header = []
+# l_binstring_footer = []
+# for item in l_binstring:
+#     lineno, linestr = item
+#     if "1" not in linestr:
+#         l_binstring_footer.append(item)
+#     else:
+#         l_binstring_header.append(item)
+
+# l_binstring = l_binstring_header + l_binstring_footer
 
 
 g.setrule("Varlife")
@@ -75,31 +96,34 @@ g.show("Tiling ROM...")
 
 p_init = d_patterns_rom_body["init"]
 delta_x, delta_y = d_patterns_rom_body["delta"]
-for i_addr, binstring in enumerate(l_binstring):
+for i_addr, (_, binstring) in enumerate(l_binstring):
     for i_bit, bit in enumerate(binstring):
         d_patterns_rom_body[int(bit)].put(p_init[0] + delta_x*i_bit, p_init[1] + i_addr*delta_y, (1,0,0,1,"copy"))
 
 g.show("Done.")
 
 
-N_BITS_ROM = 15
-N_BITS_RAM = 14
+N_BITS_ROM = 13
+N_BITS_RAM = 12
 
 ram_length_in = g.getstring("""ROM size: {}
 Input maximum RAM address (RAM size - 1) (3 <= n <= (1 << {})):""".format(len(parsed), N_BITS_RAM))
 
+ram_negative_in = g.getstring("Input negative RAM buffer size:")
+
 ROM_LENGTH = len(parsed)
-RAM_LENGTH = int(ram_length_in) + 1
-
-
+RAM_NEGATIVE_BUFFER_SIZE = int(ram_negative_in)
+RAM_POSITIVE_BUFFER_SIZE = int(ram_length_in) + 1
+RAM_LENGTH = RAM_NEGATIVE_BUFFER_SIZE + RAM_POSITIVE_BUFFER_SIZE
 
 d_patterns_rom_params = {
     "init": (183, 40)
 }
 
-d_patterns_ram_xoffset = 96
+# d_patterns_ram_xoffset = 96+8*2
+d_patterns_ram_xoffset = 96+8*2-8*7
 
-d_patterns_rom = {
+d_patterns_rom_demultiplexer = {
     # The bit patterns must be reversed (the lsb comes leftmost) for the rom
     "d_pattern_mpx_body": {
         "tiletype": "tile_bitpattern",
@@ -119,7 +143,32 @@ d_patterns_rom = {
             "pattern": pattern("4.2B!"),
         },
     },
+}
 
+def tile_rom_demultiplexer_body(d_pattern=d_patterns_rom_demultiplexer["d_pattern_mpx_body"]):
+    p_init = d_pattern["init"]
+    delta_x, delta_y = d_pattern["delta"]
+    h_repeats, v_repeats = d_pattern["repeats"]
+    reverse_bitarray = d_pattern["reverse_bitarray"]
+    method = d_pattern["method"] if "method" in d_pattern.keys() else "copy"
+
+    for i_addr, (lineno, _) in enumerate(l_binstring):
+        bitarray = ("{:0" + str(h_repeats) + "b}").format(lineno)
+        if reverse_bitarray:
+            bitarray = list(reversed(bitarray))
+        
+        for i_bit, bit in enumerate(bitarray):
+            d_pattern[int(bit)].put(p_init[0] + delta_x*i_bit, p_init[1] + i_addr*delta_y, A=(1,0,0,1,method))
+
+    if "footer" in d_pattern.keys():
+        d_footer = d_pattern["footer"]
+        # Get the offset stored in "init" first, and then overwrite it
+        x_offset_footer, y_offset_footer = d_footer["init"]        
+        d_footer["init"] = (p_init[0] + x_offset_footer, p_init[1] + i_addr*delta_y + y_offset_footer)
+        tile_pattern(d_footer)
+
+
+d_patterns_rom = {
     # Skip address 0 for the right side
     "d_pattern_right": {
         "tiletype": "tile_pattern",
@@ -137,6 +186,88 @@ d_patterns_rom = {
         "pattern": pattern("4.2B$4.2D$2.B.D$B.B.B.2D$BDBD2B.D$4.DB$3.B$4.B!"),
     },
 }
+
+d_pattern_ram_right_mpx_body = {
+    "d_pattern_right_mpx_body": {
+        "tiletype": "tile_bitpattern",
+        "reverse_bitarray": False,
+        "init": (d_patterns_ram_xoffset + (N_BITS_RAM - 7) * 8 + 144, 233),
+        "delta": (8, 16),
+        "repeats": (N_BITS_RAM, RAM_LENGTH),
+        0: pattern("""3.2D$4.D$BD2.F$B2D2FD2B$4.D$4.B$4.BD$3.2B.B$3.2D.BD$4.D.B$BD2.F2.D$B
+2D2FD2B$4.D$4.B$4.B$3.2B!"""),
+        1: pattern("""3.2D$4.D$BD2.F$B2D2FD2B$4.D$4.B$4.BD$3.2B.B$3.2D.BD$4.D.B$BD2.F2.D$B
+2D2FDB$4.D$4.B$4.B$3.2B!"""),
+    },
+}
+
+d_pattern_ram_left_mpx_body = {
+    "d_pattern_left_mpx_body": {
+        "tiletype": "tile_bitpattern",
+        "reverse_bitarray": False,
+        "init": (d_patterns_ram_xoffset + 80, 233),
+        "delta": (8, 16),
+        "repeats": (N_BITS_RAM, RAM_LENGTH),
+        0: pattern("""3.2D.BD$4.D.B$BD2.F2.D$B2D2FD2B$4.D$4.B$4.B$3.2B$3.2D$4.D$4.B$3.2B$4.
+D$4.B$4.BD$3.2B.B!"""),
+        1: pattern("""3.2D.BD$4.D.B$BD2.F2.D$B2D2FDB$4.D$4.B$4.B$3.2B$3.2D$4.D$4.B$3.2B$4.D
+$4.B$4.BD$3.2B.B!"""),
+        # There is a footer that must be placed when tiling the RAM's mpx
+        "footer": {
+            "tiletype": "tile_pattern",
+            "init": (3, 15), # The offset of the footer
+            "delta": (8, -1),
+            "repeats": (N_BITS_RAM, 1),
+            "pattern": pattern("2B.o!"),
+            "method": "and",
+        },
+    },
+}
+
+def tile_ram_demultiplexer_body(d_pattern):
+    p_init = d_pattern["init"]
+    delta_x, delta_y = d_pattern["delta"]
+    h_repeats, v_repeats = d_pattern["repeats"]
+    reverse_bitarray = d_pattern["reverse_bitarray"]
+    method = d_pattern["method"] if "method" in d_pattern.keys() else "copy"
+
+    i_addr = 0
+    while i_addr < 11:
+        lineno = i_addr
+        bitarray = ("{:0" + str(h_repeats) + "b}").format(lineno)
+        if reverse_bitarray:
+            bitarray = list(reversed(bitarray))
+        
+        for i_bit, bit in enumerate(bitarray):
+            d_pattern[int(bit)].put(p_init[0] + delta_x*i_bit, p_init[1] + i_addr*delta_y, A=(1,0,0,1,method))
+        i_addr += 1
+
+    while i_addr < 11 + RAM_NEGATIVE_BUFFER_SIZE:
+        lineno = ((1 << N_BITS_RAM) - 1) - (i_addr - 11)
+        bitarray = ("{:0" + str(h_repeats) + "b}").format(lineno)
+        if reverse_bitarray:
+            bitarray = list(reversed(bitarray))
+        
+        for i_bit, bit in enumerate(bitarray):
+            d_pattern[int(bit)].put(p_init[0] + delta_x*i_bit, p_init[1] + i_addr*delta_y, A=(1,0,0,1,method))
+        i_addr += 1
+
+    while i_addr < RAM_NEGATIVE_BUFFER_SIZE + RAM_POSITIVE_BUFFER_SIZE:
+        lineno = i_addr - RAM_NEGATIVE_BUFFER_SIZE
+        bitarray = ("{:0" + str(h_repeats) + "b}").format(lineno)
+        if reverse_bitarray:
+            bitarray = list(reversed(bitarray))
+        
+        for i_bit, bit in enumerate(bitarray):
+            d_pattern[int(bit)].put(p_init[0] + delta_x*i_bit, p_init[1] + i_addr*delta_y, A=(1,0,0,1,method))
+        i_addr += 1
+
+    if "footer" in d_pattern.keys():
+        d_footer = d_pattern["footer"]
+        # Get the offset stored in "init" first, and then overwrite it
+        x_offset_footer, y_offset_footer = d_footer["init"]        
+        d_footer["init"] = (p_init[0] + x_offset_footer, p_init[1] + i_addr*delta_y + y_offset_footer)
+        tile_pattern(d_footer)
 
 d_patterns_ram = {
     "d_pattern_ramcell": {
@@ -159,18 +290,6 @@ d_patterns_ram = {
 B$4.D.B$3.2D$3.2B!"""),
     },
 
-    "d_pattern_right_mpx_body": {
-        "tiletype": "tile_bitpattern",
-        "reverse_bitarray": False,
-        "init": (d_patterns_ram_xoffset + (N_BITS_RAM - 7) * 8 + 144, 233),
-        "delta": (8, 16),
-        "repeats": (N_BITS_RAM, RAM_LENGTH),
-        0: pattern("""3.2D$4.D$BD2.F$B2D2FD2B$4.D$4.B$4.BD$3.2B.B$3.2D.BD$4.D.B$BD2.F2.D$B
-2D2FD2B$4.D$4.B$4.B$3.2B!"""),
-        1: pattern("""3.2D$4.D$BD2.F$B2D2FD2B$4.D$4.B$4.BD$3.2B.B$3.2D.BD$4.D.B$BD2.F2.D$B
-2D2FDB$4.D$4.B$4.B$3.2B!"""),
-    },
-
     "d_pattern_left_mpx_rightborder": {
         "tiletype": "tile_pattern",
         "init": (d_patterns_ram_xoffset + (N_BITS_RAM - 7) * 8 + 136, 232),
@@ -178,27 +297,6 @@ B$4.D.B$3.2D$3.2B!"""),
         "repeats": (1, RAM_LENGTH),
         "pattern": pattern("""3.2B$3.2D$4.D$BD2.F$B2D2FD2B$4.D$4.B$4.B$3.2B$4.D$4.B$3.DBD$4.B.2B$3.
 2B$4.D$4.B!""")
-    },
-
-    "d_pattern_left_mpx_body": {
-        "tiletype": "tile_bitpattern",
-        "reverse_bitarray": False,
-        "init": (d_patterns_ram_xoffset + 80, 233),
-        "delta": (8, 16),
-        "repeats": (N_BITS_RAM, RAM_LENGTH),
-        0: pattern("""3.2D.BD$4.D.B$BD2.F2.D$B2D2FD2B$4.D$4.B$4.B$3.2B$3.2D$4.D$4.B$3.2B$4.
-D$4.B$4.BD$3.2B.B!"""),
-        1: pattern("""3.2D.BD$4.D.B$BD2.F2.D$B2D2FDB$4.D$4.B$4.B$3.2B$3.2D$4.D$4.B$3.2B$4.D
-$4.B$4.BD$3.2B.B!"""),
-        # There is a footer that must be placed when tiling the RAM's mpx
-        "footer": {
-            "tiletype": "tile_pattern",
-            "init": (3, 15), # The offset of the footer
-            "delta": (8, -1),
-            "repeats": (N_BITS_RAM, 1),
-            "pattern": pattern("2B.o!"),
-            "method": "and",
-        },
     },
 
     # address 0 is skipped for this part
@@ -258,14 +356,19 @@ def tile_module(d_module):
 
 g.setrule("Varlife")
 
-g.show("Tiling ROM demultiplexer...")
 
 # ROM
+g.show("Tiling ROM demultiplexer...")
 tile_module(d_patterns_rom)
 
-g.show("Tiling RAM module...")
+tile_rom_demultiplexer_body()
+
 
 # RAM
+g.show("Tiling RAM module...")
 tile_module(d_patterns_ram)
+
+tile_ram_demultiplexer_body(d_pattern=d_pattern_ram_left_mpx_body["d_pattern_left_mpx_body"])
+tile_ram_demultiplexer_body(d_pattern=d_pattern_ram_right_mpx_body["d_pattern_right_mpx_body"])
 
 g.show("Done.")

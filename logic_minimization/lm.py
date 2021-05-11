@@ -24,6 +24,8 @@ def espresso2litlist_list(l):
         l = ("or", l)
     ret = []
     for l1 in l[1:]:
+        if l1[0] != "and":
+            l1 = ("and", l1)
         try:
             ret.append(tuple([l2[1] for l2 in l1[1:]]))
         except Exception as e:
