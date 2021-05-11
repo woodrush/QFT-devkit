@@ -80,11 +80,11 @@ for line in parsed:
     rom_width = 3+8+2+16+2+8+2
     # rom_width = 3+18+18+8+2
 
-    linestr = ("{:0" + str(rom_width) + "b}").format(int(linestr, 2))
+    # linestr = ("{:0" + str(rom_width) + "b}").format(int(linestr, 2))
 
-    # linestr = ("{:" + str(rom_width) + "b}").format(int(linestr, 2))
-    # if "1" not in linestr:
-    #     linestr = " "*rom_width
+    linestr = ("{:" + str(rom_width) + "b}").format(int(linestr, 2))
+    if "1" not in linestr:
+        linestr = " "*rom_width
 
     if linestr not in d_inst2lineno.keys():
         d_inst2lineno[linestr] = []
@@ -92,14 +92,35 @@ for line in parsed:
     d_inst2lineno[linestr].append(lineno)
     d_lineno2inst[lineno] = linestr
 
-inst_sorted = sorted(d_inst2lineno.items(), key=lambda x: len(x[1]), reverse=True)
-# inst_sorted = sorted(d_inst2lineno.items(), key=lambda x: x[0], reverse=True)
+inst_sorted_appearances = sorted(d_inst2lineno.items(), key=lambda x: len(x[1]), reverse=True)
+inst_sorted = inst_sorted_appearances
 
-l_binstring = [(a, b) for a, (b, _) in enumerate(inst_sorted)]
 d_inst2insthash = dict([(b, a) for a, (b, _) in enumerate(inst_sorted)])
 linenolist = sorted(d_lineno2inst.keys())
 
-l_binstring_pc2hash = [(lineno, "{:010b}".format(d_inst2insthash[d_lineno2inst[lineno]])) for lineno in linenolist]
+
+l_binstring_pc2hash = [(lineno, "".join(reversed("{:010b}".format(d_inst2insthash[d_lineno2inst[lineno]])))) for lineno in linenolist]
+
+
+inst_sorted_rest = inst_sorted_appearances[10:]
+inst_sorted_bitlength = sorted(inst_sorted_rest, key=lambda x: x[0], reverse=True)
+
+inst_sorted_appearances_head = [(k.replace(" ", "0"), v) for k, v in inst_sorted_appearances[:10]]
+inst_sorted = inst_sorted_appearances_head + inst_sorted_bitlength
+
+l_binstring = [(a, b) for a, (b, _) in enumerate(inst_sorted)]
+
+
+minimize = False
+if minimize:
+    from logic_minimization.hamming import get_minimized_rom
+    d_insthash2lineno = dict([("".join(reversed("{:010b}".format(d_inst2insthash[k]))), d_inst2lineno[k]) for k in d_inst2insthash.keys()])
+    # g.note(str(d_insthash2lineno))
+    minimized_rom, _, _ = get_minimized_rom(d_insthash2lineno)
+    # g.note(str(minimized_rom))
+    minimized_rom = sorted(minimized_rom, key=lambda x: x[1], reverse=True)
+
+    l_binstring_pc2hash = minimized_rom
 
 # def revstr(x):
 #     h = d_inst2insthash[d_lineno2inst[x]]
@@ -110,7 +131,6 @@ l_binstring_pc2hash = [(lineno, "{:010b}".format(d_inst2insthash[d_lineno2inst[l
 #         ret = " "*10
 #     return ret
 
-# # l_binstring_pc2hash = [(lineno, "".join(reversed("{:010b}".format(d_inst2insthash[d_lineno2inst[lineno]])))) for lineno in linenolist]
 # l_binstring_pc2hash = [(lineno, revstr(lineno)) for lineno in linenolist]
 # l_binstring_pc2hash = tuple(sorted(l_binstring_pc2hash, key=lambda x: x[1], reverse=True))
 
@@ -134,6 +154,7 @@ g.show("Tiling ROM hashtable 2...")
 
 p_init = d_patterns_rom_body["init2"]
 delta_x, delta_y = d_patterns_rom_body["delta"]
+# for i_addr, (_, binstring) in enumerate(l_binstring_pc2hash):
 for i_addr, (_, binstring) in enumerate(l_binstring_pc2hash):
     # for i_bit, bit in enumerate(reversed(binstring)):
     for i_bit, bit in enumerate(binstring):
@@ -173,9 +194,10 @@ d_patterns_rom_demultiplexer = {
         "init": d_patterns_rom_params["init"],
         "delta": (8, -8),
         "repeats": (N_BITS_ROM, ROM_LENGTH),
-        0: pattern("3.DB$4.B$4.D$3BD2F2D$BD2.F2.D$2.B.D$.DB.2D$2.B.2B!"),
-        1: pattern("3.DB$4.B$4.D$B.BD2F2D$BD2.F2.D$2.B.D$.DB.2D$2.B.2B!"),
-
+        "0": pattern("3.DB$4.B$4.D$3BD2F2D$BD2.F2.D$2.B.D$.DB.2D$2.B.2B!"),
+        "1": pattern("3.DB$4.B$4.D$B.BD2F2D$BD2.F2.D$2.B.D$.DB.2D$2.B.2B!"),
+        "-": pattern("3.DB$4.B$4.D$3BD2F2D$B3.F2.D$4.D$4.2D$4.2B!"),
+        # "-": pattern("3.DB$4.B$4.D$3BD2F2D$B3.F2.D$4.D$4.2D$4.2B$4.B!"),
         # There is a footer that must be placed when tiling the ROM's mpx
         "footer": {
             "tiletype": "tile_pattern",
@@ -201,14 +223,23 @@ def tile_rom_demultiplexer_body(
     method = d_pattern["method"] if "method" in d_pattern.keys() else "copy"
 
     for i_addr, (lineno, _) in enumerate(l_binstring):
-        bitarray = ("{:0" + str(h_repeats) + "b}").format(lineno)
+        if type(lineno) == int:
+            bitarray = ("{:0" + str(h_repeats) + "b}").format(lineno)
+        else:
+            bitarray = lineno
         if reverse_bitarray:
             bitarray = list(reversed(bitarray))
         
         for i_bit, bit in enumerate(bitarray):
             if bit == " ":
                 continue
-            d_pattern[int(bit)].put(p_init[0] + delta_x*i_bit, p_init[1] + i_addr*delta_y, A=(1,0,0,1,method))
+            d_pattern[bit].put(p_init[0] + delta_x*i_bit, p_init[1] + i_addr*delta_y, A=(1,0,0,1,method))
+            if bit == "-":
+                g.setcell(
+                    p_init[0] + delta_x*i_bit + 3,
+                    p_init[1] + i_addr*delta_y + 8,
+                    0
+                )
 
     if "footer" in d_pattern.keys():
         d_footer = d_pattern["footer"]
@@ -420,9 +451,11 @@ tile_module(d_patterns_rom)
 
 tile_rom_demultiplexer_body(l_binstring)
 
+# tile_rom_demultiplexer_body(l_binstring_pc2hash, xoffset=32*8, h_repeats=12)
 tile_rom_demultiplexer_body(l_binstring_pc2hash, xoffset=32*8, h_repeats=12)
-tile_pattern(d_patterns_rom["d_pattern_right"], xoffset=32*8+2*8, v_repeats=len(parsed)-1)
-tile_pattern(d_patterns_rom["d_pattern_left"],  xoffset=32*8, v_repeats=len(parsed))
+
+tile_pattern(d_patterns_rom["d_pattern_right"], xoffset=32*8+2*8, v_repeats=len(l_binstring_pc2hash)-1)
+tile_pattern(d_patterns_rom["d_pattern_left"],  xoffset=32*8, v_repeats=len(l_binstring_pc2hash))
 
 # RAM
 g.show("Tiling RAM module...")

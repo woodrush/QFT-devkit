@@ -1,6 +1,6 @@
 # Metafier V3: writes directly to output.mc
 # Avoids memory errors for large programs
-# Assumes the pattern width is less than or equal to 2048
+# Assumes the pattern width is less than or equal to 1024
 # ===REQUIRES metatemplate11.mc===
 
 import golly as g
@@ -27,8 +27,8 @@ if len(cells) % 3: cells = cells[:-1]
 selw = selection[2]
 selh = selection[3]
 
-metafier_width = 2048
-metafier_height = 2048
+metafier_width = 1024
+metafier_height = 1024
 
 patternsize = 1 << int(np.ceil(np.log2(selh | selw)))
 patternsize_h = max(metafier_height, 1 << int(np.ceil(np.log2(selh))))
@@ -65,7 +65,7 @@ metapattern[metapattern < 5630] = 0
 
 #Using metatemplate11, memoization, and some recursion
 def createLine(pattern, outfile, linenum = [5726], memo = {}): #linenum and memo are mutable function arguments, which are only initialized during function definition
-    memoizable = pattern.shape[0] <= 2048
+    memoizable = pattern.shape[0] <= 1024
     if (not memoizable) or (tuple(pattern.ravel().tolist()) not in memo): #If we haven't seen this type of pattern before, let's remember it
         if pattern.shape[0] == 2: #Pattern is a leaf, write leaf line
             outfile.write('{} {} {} {} {}\n'.format(pattern.shape[0].bit_length() + 10,
@@ -74,7 +74,7 @@ def createLine(pattern, outfile, linenum = [5726], memo = {}): #linenum and memo
                                                     pattern[1, 0],
                                                     pattern[1, 1]))
         else: #Pattern is a branch, keep going down quadtree
-            if pattern.shape[0] <= 2048 and pattern.shape[1] <= 2048:
+            if pattern.shape[0] <= 1024 and pattern.shape[1] <= 1024:
                 subpatterns = pattern.reshape(2, pattern.shape[0] >> 1, 2, pattern.shape[1] >> 1).swapaxes(1,2)
                 outfile.write('{} {} {} {} {}\n'.format(pattern.shape[0].bit_length() + 10,
                                                         createLine(subpatterns[0, 0], outfile),
