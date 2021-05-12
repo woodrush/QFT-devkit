@@ -8,6 +8,7 @@ import sys
 QFTASM_STACK_SIZE = 233
 QFTASM_RAMSTDOUT_BUF_STARTPOSITION = 790
 
+use_dual_sorting = True
 
 d_patterns_rom_body = {
     "init": (-289+8-8*4, 40),
@@ -102,24 +103,30 @@ for line in parsed:
     d_inst2lineno[linestr].append(lineno)
     d_lineno2inst[lineno] = linestr
 
-inst_sorted_bitlength = sorted(d_inst2lineno.items(), key=lambda x: x[0], reverse=True)
-inst_sorted = inst_sorted_bitlength
+if use_dual_sorting:
+    inst_sorted_appearances = sorted(d_inst2lineno.items(), key=lambda x: len(x[1]), reverse=True)
 
-# inst_sorted_appearances = sorted(d_inst2lineno.items(), key=lambda x: len(x[1]), reverse=True)
-# inst_sorted = inst_sorted_appearances
+    inst_sorted_rest = inst_sorted_appearances[10:]
+    inst_sorted_bitvalues = sorted(inst_sorted_rest, key=lambda x: x[0], reverse=True)
+
+    inst_sorted_head = inst_sorted_appearances[:10]
+    inst_sorted_appearances_head = [(k.replace(" ", "0"), v) for k, v in inst_sorted_head]
+
+    inst_sorted = inst_sorted_appearances_head + inst_sorted_bitvalues
+
+else:
+    inst_sorted_bitvalues = sorted(d_inst2lineno.items(), key=lambda x: x[0], reverse=True)
+    inst_sorted = inst_sorted_bitvalues
 
 d_inst2insthash = dict([(b, a) for a, (b, _) in enumerate(inst_sorted)])
-linenolist = sorted(d_lineno2inst.keys())
 
+lineno2insthash = []
+for inst, l in inst_sorted:
+    for v in l:
+        lineno2insthash.append((v, d_inst2insthash[inst]))
+d_lineno2insthash = dict(lineno2insthash)
 
-l_binstring_pc2hash = [(lineno, "".join(reversed("{:010b}".format(d_inst2insthash[d_lineno2inst[lineno]])))) for lineno in linenolist]
-
-
-# inst_sorted_rest = inst_sorted_appearances[10:]
-# inst_sorted_bitlength = sorted(inst_sorted_rest, key=lambda x: x[0], reverse=True)
-
-# inst_sorted_appearances_head = [(k.replace(" ", "0"), v) for k, v in inst_sorted_appearances[:10]]
-# inst_sorted = inst_sorted_appearances_head + inst_sorted_bitlength
+l_binstring_pc2hash = [(lineno, "".join(reversed("{:010b}".format(d_lineno2insthash[lineno])))) for lineno in range(len(parsed))]
 
 l_binstring = [(a, b) for a, (b, _) in enumerate(inst_sorted)]
 

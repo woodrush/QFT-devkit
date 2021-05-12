@@ -192,7 +192,7 @@ if write_bytes_filepath:
     for t in write_bytes:
         write_byte_at(*t)
     g.show("Done.")
-    g.note("Written {} initial RAM bytes.".format(len(write_bytes)))
+    g.note("Wrote {} initial RAM bytes.".format(len(write_bytes)))
 else:
     g.note("Skipped writing initial RAM bytes.")
 
