@@ -4,6 +4,11 @@ import golly as g
 from pyparsing import *
 import sys
 
+
+QFTASM_STACK_SIZE = 233
+QFTASM_RAMSTDOUT_BUF_STARTPOSITION = 790
+
+
 d_patterns_rom_body = {
     "init": (-289+8-8*4, 40),
     "init2": (-289+8-8*4 + 63*8, 40),
@@ -70,6 +75,11 @@ d_lineno2inst = {}
 
 for line in parsed:
     lineno, opcode, (d_1, n_1), (d_2, n_2), (d_3, n_3) = line
+
+    if int(n_1) >= (1 << 8):
+        g.warn("Error: The first operand {} at line {} from instruction {} has a bitlength larger than 8. The first operand must have a bitlength less than 8 bits.".format(n_1, lineno, line))
+        g.exit("Bitlength error.")
+
     d_1, d_2, d_3 = map(lambda n: int2binstr((n + (1 << 16)) % (1 << 16), length=2),  [d_1, d_2, d_3])
     # n_1, n_2 = map(lambda n: int2binstr((n + (1 << 16)) % (1 << 16), length=16), [n_1, n_2])
     n_1 = int2binstr((n_1 + (1 << 16)) % (1 << 16), length=8)
@@ -92,8 +102,11 @@ for line in parsed:
     d_inst2lineno[linestr].append(lineno)
     d_lineno2inst[lineno] = linestr
 
-inst_sorted_appearances = sorted(d_inst2lineno.items(), key=lambda x: len(x[1]), reverse=True)
-inst_sorted = inst_sorted_appearances
+inst_sorted_bitlength = sorted(d_inst2lineno.items(), key=lambda x: x[0], reverse=True)
+inst_sorted = inst_sorted_bitlength
+
+# inst_sorted_appearances = sorted(d_inst2lineno.items(), key=lambda x: len(x[1]), reverse=True)
+# inst_sorted = inst_sorted_appearances
 
 d_inst2insthash = dict([(b, a) for a, (b, _) in enumerate(inst_sorted)])
 linenolist = sorted(d_lineno2inst.keys())
@@ -102,11 +115,11 @@ linenolist = sorted(d_lineno2inst.keys())
 l_binstring_pc2hash = [(lineno, "".join(reversed("{:010b}".format(d_inst2insthash[d_lineno2inst[lineno]])))) for lineno in linenolist]
 
 
-inst_sorted_rest = inst_sorted_appearances[10:]
-inst_sorted_bitlength = sorted(inst_sorted_rest, key=lambda x: x[0], reverse=True)
+# inst_sorted_rest = inst_sorted_appearances[10:]
+# inst_sorted_bitlength = sorted(inst_sorted_rest, key=lambda x: x[0], reverse=True)
 
-inst_sorted_appearances_head = [(k.replace(" ", "0"), v) for k, v in inst_sorted_appearances[:10]]
-inst_sorted = inst_sorted_appearances_head + inst_sorted_bitlength
+# inst_sorted_appearances_head = [(k.replace(" ", "0"), v) for k, v in inst_sorted_appearances[:10]]
+# inst_sorted = inst_sorted_appearances_head + inst_sorted_bitlength
 
 l_binstring = [(a, b) for a, (b, _) in enumerate(inst_sorted)]
 
@@ -169,9 +182,9 @@ N_BITS_ROM = 10
 N_BITS_RAM = 10
 
 ram_length_in = g.getstring("""ROM size: {}
-Input maximum RAM address (RAM size - 1) (3 <= n <= (1 << {})):""".format(len(parsed), N_BITS_RAM))
+Input maximum RAM address (RAM size - 1) (3 <= n <= (1 << {})):""".format(len(parsed), N_BITS_RAM), str(QFTASM_RAMSTDOUT_BUF_STARTPOSITION))
 
-ram_negative_in = g.getstring("Input negative RAM buffer size:")
+ram_negative_in = g.getstring("Input negative RAM buffer size:", str(QFTASM_STACK_SIZE))
 
 # ROM_LENGTH = len(parsed)
 ROM_LENGTH = len(l_binstring)
