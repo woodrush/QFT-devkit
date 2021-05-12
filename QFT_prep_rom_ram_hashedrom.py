@@ -57,11 +57,25 @@ class Parser(object):
         return self.program.parseString(string)
 
 
-g.show("Loading code from clipboard...")
+# g.show("Loading code from clipboard...")
 
-rawcode = g.getclipstr()
+# rawcode = g.getclipstr()
 
-g.show("Parsing clipboard...")
+# g.show("Parsing clipboard...")
+
+g.show("Reading code from an input QFTASM file...")
+
+rom_qftasm_filepath = g.opendialog("Open the ROM qftasm file", "QFTASM files (*.qftasm)|*.qftasm")
+
+if rom_qftasm_filepath:
+    with open(rom_qftasm_filepath, "rt") as f:
+        rawcode = f.read()
+else:
+    g.exit("No input file provided - exiting.")
+
+g.show("Parsing QFTASM...")
+
+
 
 parser = Parser()
 parsed = parser.parse_string(rawcode)

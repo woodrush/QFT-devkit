@@ -203,100 +203,112 @@ show_raw_ram_region()
 
 show_registers()
 
-write_ram_string = ""
-
-
-# write_ram_string = g.getstring("Enter string to write to stdin (blank for not writing):")
-
-
-write_ram_string = """(define defun
-  (macro (fname varlist body)
-    (list
-      (quote define) fname
-      (list (quote lambda*) varlist body))))
-
-(defun append (l item)
-  (if l
-    (cons (car l) (append (cdr l) item))
-    (cons item ())))
-
-(defun isprime (n)
-  ((lambda* (primelist p ret)
-     (progn
-       (while primelist
-         (progn
-           (define p (car primelist))
-           (define primelist (cdr primelist))
-           (if (eq 0 (mod n p))
-             (progn
-               (define primelist ())
-               (define ret ()))
-             ())))
-       ret))
-   primelist () 1))
-
-(define n 2)
-(define nmax 20)
-(define primelist (cons 2 ()))
-
-(while (< n nmax)
-  (progn
-    (define n (+ 1 n))
-    (if (isprime n)
-      (define primelist (append primelist n))
-      ())))
-
-(print primelist)"""
-
-# write_ram_string = """(print
-#   (((lambda (f)
-#       ((lambda (x) (f (lambda (v) ((x x) v))))
-#        (lambda (x) (f (lambda (v) ((x x) v))))))
-#     (lambda (fact)
-#       (lambda (n)
-#         (if (eq n 0) 1 (* n (fact (- n 1)))))))
-#    5))"""
-
-# write_ram_string = """(define counter
-#   (lambda (n)
-#     (lambda (methodname)
-#       (if (eq methodname (quote inc))
-#         (lambda () (define n (+ n 1)))
-#       (if (eq methodname (quote dec))
-#         (lambda () (define n (- n 1)))
-#       (if (eq methodname (quote get))
-#         (lambda () n)
-#       (if (eq methodname (quote set))
-#         (lambda (m) (define n m))
-#         ())))))))
-
-# (define . (macro (object methodname) (list object (list (quote quote) methodname))))
-# (define new (lambda (x) (x)))
-
-# (define counter1 (new counter))
-# (define counter2 (new counter))
-
-# ((. counter1 set) 0)
-# ((. counter2 set) 8)
-
-# (print ((. counter1 inc)) ())
-# (print ((. counter1 inc)) ())
-# (print ((. counter1 inc)) ())
-# (print ((. counter2 inc)) ())
-# (print ((. counter2 dec)) ())
-# (print ((. counter1 inc)) ())
-# (print ((. counter2 inc)) ())"""
-
-write_ram_string = "(print (* 3 14))"
-
-# write_ram_string = "3*2+1"
-
 # write_ram_string = ""
 
-write_ram_string = g.getstring("Enter string to write to the RAM: (blank for not writing)", write_ram_string)
 
-if len(write_ram_string) > 0:
-    write_ram(write_ram_string)
+# # write_ram_string = g.getstring("Enter string to write to stdin (blank for not writing):")
+
+
+# write_ram_string = """(define defun
+#   (macro (fname varlist body)
+#     (list
+#       (quote define) fname
+#       (list (quote lambda*) varlist body))))
+
+# (defun append (l item)
+#   (if l
+#     (cons (car l) (append (cdr l) item))
+#     (cons item ())))
+
+# (defun isprime (n)
+#   ((lambda* (primelist p ret)
+#      (progn
+#        (while primelist
+#          (progn
+#            (define p (car primelist))
+#            (define primelist (cdr primelist))
+#            (if (eq 0 (mod n p))
+#              (progn
+#                (define primelist ())
+#                (define ret ()))
+#              ())))
+#        ret))
+#    primelist () 1))
+
+# (define n 2)
+# (define nmax 20)
+# (define primelist (cons 2 ()))
+
+# (while (< n nmax)
+#   (progn
+#     (define n (+ 1 n))
+#     (if (isprime n)
+#       (define primelist (append primelist n))
+#       ())))
+
+# (print primelist)"""
+
+# # write_ram_string = """(print
+# #   (((lambda (f)
+# #       ((lambda (x) (f (lambda (v) ((x x) v))))
+# #        (lambda (x) (f (lambda (v) ((x x) v))))))
+# #     (lambda (fact)
+# #       (lambda (n)
+# #         (if (eq n 0) 1 (* n (fact (- n 1)))))))
+# #    5))"""
+
+# # write_ram_string = """(define counter
+# #   (lambda (n)
+# #     (lambda (methodname)
+# #       (if (eq methodname (quote inc))
+# #         (lambda () (define n (+ n 1)))
+# #       (if (eq methodname (quote dec))
+# #         (lambda () (define n (- n 1)))
+# #       (if (eq methodname (quote get))
+# #         (lambda () n)
+# #       (if (eq methodname (quote set))
+# #         (lambda (m) (define n m))
+# #         ())))))))
+
+# # (define . (macro (object methodname) (list object (list (quote quote) methodname))))
+# # (define new (lambda (x) (x)))
+
+# # (define counter1 (new counter))
+# # (define counter2 (new counter))
+
+# # ((. counter1 set) 0)
+# # ((. counter2 set) 8)
+
+# # (print ((. counter1 inc)) ())
+# # (print ((. counter1 inc)) ())
+# # (print ((. counter1 inc)) ())
+# # (print ((. counter2 inc)) ())
+# # (print ((. counter2 dec)) ())
+# # (print ((. counter1 inc)) ())
+# # (print ((. counter2 inc)) ())"""
+
+# write_ram_string = "(print (* 3 14))"
+
+# # write_ram_string = "3*2+1"
+
+# # write_ram_string = ""
+
+# write_ram_string = g.getstring("Enter string to write to the RAM: (blank for not writing)", write_ram_string)
+
+# if len(write_ram_string) > 0:
+#     write_ram(write_ram_string)
+
+
+stdin_string_filepath = g.opendialog("Open the text file to write to the stdin buffer")
+
+if stdin_string_filepath:
+    with open(stdin_string_filepath, "rt") as f:
+        stdin_string = f.read()
+    write_ram(stdin_string)
+    g.note("Wrote the following content from {} into the stdin buffer.\n----\n{}".format(stdin_string_filepath, stdin_string))
+else:
+    g.note("Skipped writing the stdin buffer.")
+
 
 show_stdio()
 
