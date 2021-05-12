@@ -74,5 +74,5 @@ def write_byte_at(addr, write_byte):
                 write_value = 1 - int(bit)
                 g.setcell(write_x, write_y, write_value)
 
-with read("qftramheader_common.py", "rt") as f:
-    eval(f.read())
+with open("src/qftramheader_common.py", "rt") as f:
+    exec(f.read(), locals(), globals())

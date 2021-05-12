@@ -44,5 +44,5 @@ def write_byte_at(addr, write_byte):
         for x_offset in range(2):
             g.setcell(p_init[0] + i_bit * delta_x + x_offset, p_init[1] + addr * delta_y, d_bit2state[int(bit)])
 
-with read("qftramheader_common.py", "rt") as f:
-    eval(f.read())
+with open("src/qftramheader_common.py", "rt") as f:
+    exec(f.read(), locals(), globals())

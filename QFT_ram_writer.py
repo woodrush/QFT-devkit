@@ -1,5 +1,5 @@
 import golly as g
-from qftramheader import *
+from src.qftramheader import *
 
 write_initial_ram()
 write_stdin_buffer()

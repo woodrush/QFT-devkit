@@ -1,5 +1,5 @@
 import golly as g
-from qftramheader import *
+from src.qftramheader import *
 
 show_raw_ram_region()
 show_registers()

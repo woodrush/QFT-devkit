@@ -51,7 +51,7 @@ def write_ram(stdin_string):
 def show_raw_ram_region(i_x0=0, i_y0=0, i_x1=15, i_y1=32, reverse=False):
     def cell2chr(c):
         if c in d_state2chr.keys():
-            return d[c]
+            return d_state2chr[c]
         else:
             return "?"
 
