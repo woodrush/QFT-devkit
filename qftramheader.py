@@ -1,63 +1,15 @@
 import golly as g
 
-# QFTASM_RAMSTDIN_BUF_STARTPOSITION = 7291
-# QFTASM_RAMSTDOUT_BUF_STARTPOSITION = 8191
-
-# QFTASM_RAMSTDIN_BUF_STARTPOSITION = 4607
-# QFTASM_RAMSTDOUT_BUF_STARTPOSITION = 5119
-
-# QFTASM_RAMSTDIN_BUF_STARTPOSITION = 4499
-# QFTASM_RAMSTDOUT_BUF_STARTPOSITION = 4999
-
-# QFTASM_RAMSTDIN_BUF_STARTPOSITION = 503
-# QFTASM_RAMSTDOUT_BUF_STARTPOSITION = 511
-
-# QFTASM_RAMSTDIN_BUF_STARTPOSITION = 4095-1024-512
-# QFTASM_RAMSTDOUT_BUF_STARTPOSITION = 4095-1024-(512-128)
-
-
-
-# # calc.c
-# RAM_NEGATIVE_BUFFER_SIZE = 50
-# QFTASM_RAMSTDIN_BUF_STARTPOSITION = 61 + RAM_NEGATIVE_BUFFER_SIZE
-# QFTASM_RAMSTDOUT_BUF_STARTPOSITION = 63 + RAM_NEGATIVE_BUFFER_SIZE
-
-# # calc.c
-# RAM_NEGATIVE_BUFFER_SIZE = 200
-# QFTASM_RAMSTDIN_BUF_STARTPOSITION = 688 + RAM_NEGATIVE_BUFFER_SIZE
-# QFTASM_RAMSTDOUT_BUF_STARTPOSITION = 1200 + RAM_NEGATIVE_BUFFER_SIZE
-
-# # lisp.c
-# RAM_NEGATIVE_BUFFER_SIZE = 500
-# QFTASM_RAMSTDIN_BUF_STARTPOSITION = (4095-1024-512) + RAM_NEGATIVE_BUFFER_SIZE
-# QFTASM_RAMSTDOUT_BUF_STARTPOSITION = (4095-1024-(512-128)) + RAM_NEGATIVE_BUFFER_SIZE
-
-# # calc.c
-# RAM_NEGATIVE_BUFFER_SIZE = 200
-# QFTASM_RAMSTDIN_BUF_STARTPOSITION = 688 + RAM_NEGATIVE_BUFFER_SIZE
-# QFTASM_RAMSTDOUT_BUF_STARTPOSITION = 1200 + RAM_NEGATIVE_BUFFER_SIZE
-
 s1 = g.getstring("Enter stack size:", "233")
 s2 = g.getstring("Enter stdin buffer starting address:", "290")
 s3 = g.getstring("Enter stdout buffer starting address:", "790")
 
-# calc.c
 RAM_NEGATIVE_BUFFER_SIZE = int(s1)
 QFTASM_RAMSTDIN_BUF_STARTPOSITION = int(s2) + RAM_NEGATIVE_BUFFER_SIZE
 QFTASM_RAMSTDOUT_BUF_STARTPOSITION = int(s3) + RAM_NEGATIVE_BUFFER_SIZE
 
 RAM_SIZE = 1024
 
-
-# p_init = (425, 239)
-# p_init = (346+16*2, 239)
-# p_init = (409, 239)
-# p_init = (353, 239)
-# p_init = (329, 239)
-# p_init = (321, 239)
-# p_init = (329, 239)
-
-# p_init = (289, 239)
 p_init = (337, 239)
 
 delta_x = 16
@@ -99,8 +51,6 @@ def encode_stdin_string(python_stdin):
         python_stdin_int = python_stdin_int + [0]
 
     for i_str, i in enumerate(python_stdin_int):
-        # ram[QFTASM_RAMSTDIN_BUF_STARTPOSITION - i_str][0] = ord(c)
-        # ram[QFTASM_RAMSTDIN_BUF_STARTPOSITION - i_str][1] += 1
         if i_str % 2 == 0:
             stdin_int = i
         else:
@@ -108,8 +58,6 @@ def encode_stdin_string(python_stdin):
 
         if i_str % 2 == 1 or i_str == len(python_stdin_int) - 1:
             ret.append(stdin_int)
-            # ram[QFTASM_RAMSTDIN_BUF_STARTPOSITION + i_str//2][0] = stdin_int
-            # ram[QFTASM_RAMSTDIN_BUF_STARTPOSITION + i_str//2][1] += 1
     return ret
 
 def decode_stdin_buffer(stdin_buf):
@@ -135,8 +83,6 @@ d_bit2state = {
 def write_byte_at(addr, write_byte):
     if addr < 11:
         addr = addr
-    # elif addr > 32768:
-    #     addr = 32768 - addr + 11
     elif addr >= RAM_SIZE - RAM_NEGATIVE_BUFFER_SIZE:
         addr = RAM_SIZE - addr + 10
     elif addr >= 11:
@@ -148,7 +94,6 @@ def write_byte_at(addr, write_byte):
 
 def write_ram(stdin_string):
     stdin_bytes = encode_stdin_string(stdin_string)
-    # g.note("Raw stdin bytes:" + str(stdin_bytes))
     for i_byte, b in enumerate(stdin_bytes):
         write_byte_at(i_byte + QFTASM_RAMSTDIN_BUF_STARTPOSITION - RAM_NEGATIVE_BUFFER_SIZE, b)
 
@@ -166,7 +111,6 @@ def show_stdio():
     g.show("stdin_str")
     g.show(str(len(stdin_str)))
     g.show(stdin_str)
-    # TODO: stdout
     stdout_bitstr = ["".join([str(d_state2bit[getcell_by_index(i_x, i_y)]) for i_x in range(16)])
         for i_y in range(QFTASM_RAMSTDOUT_BUF_STARTPOSITION, QFTASM_RAMSTDIN_BUF_STARTPOSITION, -1)
     ]
@@ -179,39 +123,3 @@ def show_stdio():
     stdout_str = "".join(stdout_bytes_2)
 
     g.note("Stdin:\n" + stdin_str + "\n\nStdout:\n" + stdout_str)
-
-
-
-write_bytes_filepath = g.opendialog("Open CSV for the Initial RAM Values", "CSV files (*.csv)|*.csv")
-
-if write_bytes_filepath:
-    with open(write_bytes_filepath, "rt") as f:
-        write_bytes = [map(int, line.split(",")) for line in f.readlines()]
-
-    g.show("Writing initial RAM bytes...")
-    for t in write_bytes:
-        write_byte_at(*t)
-    g.show("Done.")
-    g.note("Wrote {} initial RAM bytes.".format(len(write_bytes)))
-else:
-    g.note("Skipped writing initial RAM bytes.")
-
-
-show_raw_ram_region()
-
-show_registers()
-
-stdin_string_filepath = g.opendialog("Open the text file to write to the stdin buffer")
-
-if stdin_string_filepath:
-    with open(stdin_string_filepath, "rt") as f:
-        stdin_string = f.read()
-    write_ram(stdin_string)
-    g.note("Wrote the following content from {} into the stdin buffer.\n----\n{}".format(stdin_string_filepath, stdin_string))
-else:
-    g.note("Skipped writing the stdin buffer.")
-
-
-show_stdio()
-
-
