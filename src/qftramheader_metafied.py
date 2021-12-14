@@ -5,15 +5,22 @@ s1 = g.getstring("Enter stack size:", "233")
 s2 = g.getstring("Enter stdin buffer starting address:", "290")
 s3 = g.getstring("Enter stdout buffer starting address:", "790")
 
-s4 = g.getstring("Enter the coordinates of p_init:", "-65648469,-16320387")
+s4 = g.getstring("""Enter the coordinates of the top pixel of the hive (the following pattern) at the top-left in the most top-left RAM cell:
+(Note: These values change when a pattern with a different ROM size (i.e. a pattern with a different height) is metafied)
+_*_
+*_*
+*_*
+_*_""", "-65648599,-13551504")
 
 RAM_NEGATIVE_BUFFER_SIZE = int(s1)
 QFTASM_RAMSTDIN_BUF_STARTPOSITION = int(s2) + RAM_NEGATIVE_BUFFER_SIZE
 QFTASM_RAMSTDOUT_BUF_STARTPOSITION = int(s3) + RAM_NEGATIVE_BUFFER_SIZE
 
+RAM_SIZE = 1024
 QFTASM_REGAREA_MAX_ADDRESS = 10
 
-p_init = tuple(map(int, s4.split(",")))
+t4 = tuple(map(int, s4.split(",")))
+p_init = (t4[0] + 130, t4[1] + 13)
 
 OTCAMP_SIZE = 2048
 
