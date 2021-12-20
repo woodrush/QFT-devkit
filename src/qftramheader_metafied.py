@@ -10,7 +10,7 @@ s4 = g.getstring("""Enter the coordinates of the top pixel of the hive (the foll
 _*_
 *_*
 *_*
-_*_""", "-65648599,-13551504")
+_*_""", "-65648599,-13895568")
 
 RAM_NEGATIVE_BUFFER_SIZE = int(s1)
 QFTASM_RAMSTDIN_BUF_STARTPOSITION = int(s2) + RAM_NEGATIVE_BUFFER_SIZE
