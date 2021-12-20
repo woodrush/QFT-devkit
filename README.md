@@ -2,13 +2,14 @@
 This repository is a development kit for the computer from [The Quest for Tetris](https://github.com/QuestForTetris/QFT) (QFT), a programmable computer that works on Conway's Game of Life.
 
 ## Contents
-- `QFT_15bit_rom_14bit_ram_blank.mc`:
-  - A modified version of `Tetris8.mc` from [the original QFT repo](https://github.com/QuestForTetris/QFT) where the ROM and RAM demultiplexers are extended to 15 bits and 14 bits, respectively (the original pattern has a 9-bit ROM and 7-bit RAM architecture). Both the ROM and RAM slots are left blank so that new programs can be written in to the pattern.
-  - As a side effect of the modification, the `SL` instruction behaves strangely in the new architecture. This can be worked around by using consecutive `ADD`s instead of the `SL` instruction.
-- `QFT_prep_rom_ram.py`:
-  - A script to write a QFTASM program and prepare a RAM module with a specified size in `QFT_15bit_rom_14bit_ram_blank.mc`.
+- `QFT_hashedrom_v11.mc`:
+  - A modified version of `Tetris8.mc` from [the original QFT repo](https://github.com/QuestForTetris/QFT) where the ROM and RAM demultiplexers are extended to 12 bits and 10 bits, respectively (the original pattern has a 9-bit ROM and 7-bit RAM architecture). Both the ROM and RAM slots are left blank so that new programs can be written in to the pattern.
+- `QFT_prep_rom_ram_hashedrom.py`:
+  - A script to write a QFTASM program and prepare a RAM module with a specified size in `QFT_hashedrom_v11.mc`.
 - `QFT_ram_reader_writer.py`:
   - A tool to monitor values of registers and stdio, and also to write values to stdin.
+- `QFT_ram_reader_writer_metafied.py`:
+  - A tool to write and read values to and from the RAM directly into the metafied version of `QFT_hashedrom_v11.mc`.
 - `MetafierV3.py`:
   - A modified version of `MetafierV2.py` from [the original QFT repo](https://github.com/QuestForTetris/QFT), made to be capable of handling very large patterns that contain thousands of ROM and RAM slots.
   - `MetafierV3.py` assumes that the width of the pattern is less than or equal to 2048, made to fit `QFT_15bit_rom_14bit_ram_blank.mc`. The size limit can be modified by hand if desired.
