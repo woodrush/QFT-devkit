@@ -1,12 +1,18 @@
 from glife import *
 import golly as g
 
-RAM_NEGATIVE_BUFFER_SIZE = 200
-QFTASM_RAMSTDIN_BUF_STARTPOSITION = 350 + RAM_NEGATIVE_BUFFER_SIZE
-QFTASM_RAMSTDOUT_BUF_STARTPOSITION = 823 + RAM_NEGATIVE_BUFFER_SIZE
+
+s1 = g.getstring("Enter stack size:", "233")
+s2 = g.getstring("Enter stdin buffer starting address:", "290")
+s3 = g.getstring("Enter stdout buffer starting address:", "790")
+
+# calc.c
+RAM_NEGATIVE_BUFFER_SIZE = int(s1)
+QFTASM_RAMSTDIN_BUF_STARTPOSITION = int(s2) + RAM_NEGATIVE_BUFFER_SIZE
+QFTASM_RAMSTDOUT_BUF_STARTPOSITION = int(s3) + RAM_NEGATIVE_BUFFER_SIZE
 
 # p_init = (337, 239)
-p_init = (-65648469, -16320387)
+# p_init = (-65648469, -16320387)
 
 delta_x = 16*2048
 delta_y = 16*2048
@@ -154,355 +160,45 @@ def show_stdio():
     g.note("Stdin:\n" + stdin_str + "\n\nStdout:\n" + stdout_str)
 
 
+s4 = g.getstring("""Enter the coordinates of the top pixel of the hive (the following pattern) at the top-left in the most top-left RAM cell:
+(Note: These values change when a pattern with a different ROM size (i.e. a pattern with a different height) is metafied)
+_*_
+*_*
+*_*
+_*_""", "-65648599,-13895568")
+
+t4 = tuple(map(int, s4.split(",")))
+p_init = (t4[0] + 130, t4[1] + 13)
 
 
+write_bytes_filepath = g.opendialog("Open CSV for the Initial RAM Values", "CSV files (*.csv)|*.csv")
 
+if write_bytes_filepath:
+    with open(write_bytes_filepath, "rt") as f:
+        write_bytes = [map(int, line.split(",")) for line in f.readlines()]
 
-
-
-
-
-
-write_bytes = [
-    # precalculated_memmap.txt
-    (856,65385),
-    (857,65391),
-    (858,65394),
-    (859,65397),
-    (860,65400),
-    (861,0),
-    (862,65409),
-    (863,0),
-    (864,65412),
-    (865,65418),
-    (866,65421),
-    (867,65430),
-    (868,65436),
-    (869,65442),
-    (870,65448),
-    (871,65451),
-    (872,65454),
-    (873,87),
-    (874,0),
-    (875,0),
-    (876,110),
-    (877,0),
-    (878,0),
-    (879,11),
-    (880,65388),
-    (881,0),
-    (882,61),
-    (883,0),
-    (884,0),
-    (885,78),
-    (886,0),
-    (887,0),
-    (888,85),
-    (889,0),
-    (890,0),
-    (891,55),
-    (892,0),
-    (893,0),
-    (894,45),
-    (895,0),
-    (896,0),
-    (897,75),
-    (898,65406),
-    (899,65403),
-    (900,91),
-    (901,0),
-    (902,0),
-    (903,49),
-    (904,0),
-    (905,0),
-    (906,96),
-    (907,0),
-    (908,65415),
-    (909,102),
-    (910,0),
-    (911,0),
-    (912,67),
-    (913,0),
-    (914,0),
-    (915,83),
-    (916,0),
-    (917,0),
-    (918,24),
-    (919,65427),
-    (920,65424),
-    (921,104),
-    (922,0),
-    (923,0),
-    (924,37),
-    (925,65433),
-    (926,0),
-    (927,100),
-    (928,0),
-    (929,0),
-    (930,18),
-    (931,65439),
-    (932,0),
-    (933,106),
-    (934,0),
-    (935,0),
-    (936,31),
-    (937,65445),
-    (938,0),
-    (939,42),
-
-    # Memory initialization
-    (1,700),
-    (2,823),
-    (11,108),
-    (12,97),
-    (13,109),
-    (14,98),
-    (15,100),
-    (16,97),
-    (18,112),
-    (19,114),
-    (20,105),
-    (21,110),
-    (22,116),
-    (24,100),
-    (25,101),
-    (26,102),
-    (27,105),
-    (28,110),
-    (29,101),
-    (31,113),
-    (32,117),
-    (33,111),
-    (34,116),
-    (35,101),
-    (37,108),
-    (38,105),
-    (39,115),
-    (40,116),
-    (42,105),
-    (43,102),
-    (45,99),
-    (46,97),
-    (47,114),
-    (49,119),
-    (50,104),
-    (51,105),
-    (52,108),
-    (53,101),
-    (55,112),
-    (56,114),
-    (57,111),
-    (58,103),
-    (59,110),
-    (61,109),
-    (62,97),
-    (63,99),
-    (64,114),
-    (65,111),
-    (67,108),
-    (68,97),
-    (69,109),
-    (70,98),
-    (71,100),
-    (72,97),
-    (73,42),
-    (75,101),
-    (76,113),
-    (78,99),
-    (79,111),
-    (80,110),
-    (81,115),
-    (83,43),
-    (85,116),
-    (87,109),
-    (88,111),
-    (89,100),
-    (91,101),
-    (92,118),
-    (93,97),
-    (94,108),
-    (96,99),
-    (97,100),
-    (98,114),
-    (100,45),
-    (102,42),
-    (104,60),
-    (106,62),
-    (108,47),
-    (110,97),
-    (111,116),
-    (112,111),
-    (113,109),
-    (115,1787),
-    (119,1665),
-    (122,1357),
-    (125,2349),
-    (127,168),
-    (128,1521),
-    (131,1432),
-    (132,1471),
-    (134,1743),
-    (137,1705),
-    (140,1787),
-    (143,1787),
-    (147,1878),
-    (148,156),
-    (149,1622),
-    (150,156),
-    (151,1941),
-    (152,156),
-    (153,1941),
-    (155,2421),
-    (158,1497),
-    (160,1941),
-    (161,1941),
-    (162,2201),
-    (163,2201),
-    (164,1941),
-    (165,2359),
-    (166,350),
-    (167,65384),
-    (169,1),
-    (172,16469),
-    (175,76),
-    (176,97),
-    (177,109),
-    (178,98),
-    (179,100),
-    (180,97),
-    (181,62),
-    (183,77),
-    (184,97),
-    (185,99),
-    (186,114),
-    (187,111),
-    (188,62),
-    (190,67),
-    (191,108),
-    (192,111),
-    (193,115),
-    (194,117),
-    (195,114),
-    (196,101),
-    (197,62),
-    (199,200),
-]
-
-
-# g.show("Writing bytes...")
-# for t in write_bytes:
-#     write_byte_at(*t)
-# g.show("Done.")
-
-
-
-
-
-
-
-
-
-
-# write_byte_at(0,0)
-
-
+    g.show("Writing initial RAM bytes...")
+    for t in write_bytes:
+        write_byte_at(*t)
+    g.show("Done.")
+    g.note("Wrote {} initial RAM bytes.".format(len(write_bytes)))
+else:
+    g.note("Skipped writing initial RAM bytes.")
 
 show_raw_ram_region()
 
 show_registers()
 
-write_ram_string = ""
+stdin_string_filepath = g.opendialog("Open the text file to write to the stdin buffer")
 
+if stdin_string_filepath:
+    with open(stdin_string_filepath, "rt") as f:
+        stdin_string = f.read()
+    write_ram(stdin_string)
+    g.note("Wrote the following content from {} into the stdin buffer.\n----\n{}".format(stdin_string_filepath, stdin_string))
+else:
+    g.note("Skipped writing the stdin buffer.")
 
-# write_ram_string = g.getstring("Enter string to write to stdin (blank for not writing):")
-
-
-write_ram_string = """(define defun
-  (macro (fname varlist body)
-    (list
-      (quote define) fname
-      (list (quote lambda*) varlist body))))
-
-(defun append (l item)
-  (if l
-    (cons (car l) (append (cdr l) item))
-    (cons item ())))
-
-(defun isprime (n)
-  ((lambda* (primelist p ret)
-     (progn
-       (while primelist
-         (progn
-           (define p (car primelist))
-           (define primelist (cdr primelist))
-           (if (eq 0 (mod n p))
-             (progn
-               (define primelist ())
-               (define ret ()))
-             ())))
-       ret))
-   primelist () 1))
-
-(define n 2)
-(define nmax 20)
-(define primelist (cons 2 ()))
-
-(while (< n nmax)
-  (progn
-    (define n (+ 1 n))
-    (if (isprime n)
-      (define primelist (append primelist n))
-      ())))
-
-(print primelist)"""
-
-# write_ram_string = """(print
-#   (((lambda (f)
-#       ((lambda (x) (f (lambda (v) ((x x) v))))
-#        (lambda (x) (f (lambda (v) ((x x) v))))))
-#     (lambda (fact)
-#       (lambda (n)
-#         (if (eq n 0) 1 (* n (fact (- n 1)))))))
-#    5))"""
-
-# write_ram_string = """(define counter
-#   (lambda (n)
-#     (lambda (methodname)
-#       (if (eq methodname (quote inc))
-#         (lambda () (define n (+ n 1)))
-#       (if (eq methodname (quote dec))
-#         (lambda () (define n (- n 1)))
-#       (if (eq methodname (quote get))
-#         (lambda () n)
-#       (if (eq methodname (quote set))
-#         (lambda (m) (define n m))
-#         ())))))))
-
-# (define . (macro (object methodname) (list object (list (quote quote) methodname))))
-# (define new (lambda (x) (x)))
-
-# (define counter1 (new counter))
-# (define counter2 (new counter))
-
-# ((. counter1 set) 0)
-# ((. counter2 set) 8)
-
-# (print ((. counter1 inc)) ())
-# (print ((. counter1 inc)) ())
-# (print ((. counter1 inc)) ())
-# (print ((. counter2 inc)) ())
-# (print ((. counter2 dec)) ())
-# (print ((. counter1 inc)) ())
-# (print ((. counter2 inc)) ())"""
-
-write_ram_string = "(print (* 3 14))"
-
-# write_ram_string = "3*2+1"
-
-# write_ram_string = ""
-
-if len(write_ram_string) > 0:
-    write_ram(write_ram_string)
 
 show_stdio()
 
